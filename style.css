@@ -14,6 +14,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -24,6 +28,14 @@ body {
     radial-gradient(circle at 15% 20%, rgba(117, 255, 177, 0.14), transparent 42%),
     radial-gradient(circle at 85% 5%, rgba(160, 255, 223, 0.15), transparent 36%),
     linear-gradient(140deg, var(--bg-0), var(--bg-2));
+  transition: background 0.45s ease;
+}
+
+body.admin-mode {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(137, 198, 255, 0.2), transparent 42%),
+    radial-gradient(circle at 82% 4%, rgba(128, 221, 255, 0.18), transparent 34%),
+    linear-gradient(145deg, #06192f, #0b4e89);
 }
 
 body {
@@ -40,6 +52,10 @@ body {
   opacity: 0.25;
 }
 
+body.admin-mode .ambient {
+  background-image: linear-gradient(rgba(153, 215, 255, 0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(153, 215, 255, 0.18) 1px, transparent 1px);
+}
+
 .layout,
 .hero {
   width: min(1100px, 100%);
@@ -52,6 +68,12 @@ body {
   backdrop-filter: blur(8px);
   box-shadow: 0 10px 35px rgba(5, 20, 14, 0.55), inset 0 0 0 1px rgba(173, 255, 208, 0.14);
   border-radius: 28px;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+body.admin-mode .shell {
+  border-color: rgba(157, 219, 255, 0.38);
+  background: linear-gradient(130deg, rgba(9, 46, 79, 0.75), rgba(8, 33, 61, 0.52));
 }
 
 .hero {
@@ -59,6 +81,13 @@ body {
   margin-bottom: 1.2rem;
   position: relative;
   overflow: hidden;
+}
+
+.top-signout {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 3;
 }
 
 .hero::after {
@@ -69,6 +98,18 @@ body {
   right: -90px;
   top: -120px;
   background: radial-gradient(circle, rgba(113, 255, 191, 0.45), transparent 65%);
+  pointer-events: none;
+}
+
+body.admin-mode .hero::after {
+  background: radial-gradient(circle, rgba(118, 204, 255, 0.5), transparent 65%);
+}
+
+.brand-logo {
+  width: 64px;
+  height: auto;
+  margin-top: 0.9rem;
+  filter: drop-shadow(0 8px 12px rgba(71, 220, 150, 0.28));
 }
 
 .chip,
@@ -81,6 +122,11 @@ body {
   padding: 0.35rem 0.75rem;
   color: var(--accent);
   text-transform: uppercase;
+}
+
+body.admin-mode .chip {
+  border-color: rgba(165, 214, 255, 0.6);
+  color: #c6ebff;
 }
 
 h1,
@@ -142,6 +188,16 @@ h1 {
   background: rgba(17, 91, 60, 0.26);
 }
 
+body.admin-mode .btn-glass {
+  border-color: rgba(164, 222, 255, 0.45);
+  background: rgba(16, 65, 106, 0.34);
+}
+
+.btn-danger {
+  background: linear-gradient(110deg, #ffb5b5, #ff7d7d);
+  color: #3d0404;
+}
+
 .layout {
   display: grid;
   gap: 1.2rem;
@@ -155,9 +211,49 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.admin-controls {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 430px;
+}
+
+.password-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.password-toggle {
+  min-width: 72px;
+}
+
+.password-setup {
+  margin-top: 0.35rem;
+  border-top: 1px solid rgba(176, 255, 213, 0.24);
+  padding-top: 0.85rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.hint-label {
+  gap: 0.4rem;
+}
+
+.admin-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .composer {
   display: grid;
   gap: 0.9rem;
+}
+
+.field-help {
+  color: #9ac8b2;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 label {
@@ -179,6 +275,13 @@ select {
   font: inherit;
 }
 
+body.admin-mode input,
+body.admin-mode textarea,
+body.admin-mode select {
+  border-color: rgba(154, 221, 255, 0.28);
+  background: rgba(10, 35, 66, 0.7);
+}
+
 input::placeholder,
 textarea::placeholder {
   color: #8fb8a4;
@@ -186,7 +289,8 @@ textarea::placeholder {
 
 input:focus,
 textarea:focus,
-select:focus {
+select:focus,
+button:focus-visible {
   outline: 2px solid rgba(124, 255, 191, 0.5);
   outline-offset: 1px;
 }
@@ -227,10 +331,16 @@ select:focus {
 }
 
 .post-card {
+  position: relative;
   border: 1px solid rgba(168, 255, 217, 0.24);
   border-radius: 18px;
   padding: 1rem;
   background: rgba(5, 40, 27, 0.58);
+}
+
+body.admin-mode .post-card {
+  border-color: rgba(163, 215, 255, 0.26);
+  background: rgba(8, 46, 79, 0.55);
 }
 
 .post-meta {
@@ -239,6 +349,7 @@ select:focus {
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+  padding-right: 2rem;
 }
 
 .post-time {
@@ -278,9 +389,89 @@ select:focus {
   margin-top: 0.5rem;
 }
 
+.post-delete {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid #fff;
+  background: #fff;
+  color: #3a3a3a;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.88rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.post-delete:hover {
+  animation: wiggle 0.32s ease-in-out;
+}
+
+.delete-tip {
+  position: absolute;
+  top: 140%;
+  right: 0;
+  font-size: 0.66rem;
+  background: #ffffff;
+  color: #1d1d1d;
+  border-radius: 4px;
+  padding: 0.18rem 0.36rem;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  pointer-events: none;
+}
+
+.post-delete:hover .delete-tip,
+.post-delete:focus-visible .delete-tip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .empty-state {
   margin: 0;
   color: var(--muted);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 40;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(480px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(187, 255, 222, 0.35);
+  background: linear-gradient(150deg, rgba(7, 47, 31, 0.95), rgba(4, 23, 15, 0.95));
+  padding: 1rem;
+}
+
+.modal-card p {
+  color: var(--muted);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+  75% { transform: rotate(-6deg); }
+  100% { transform: rotate(0deg); }
 }
 
 @media (min-width: 860px) {
