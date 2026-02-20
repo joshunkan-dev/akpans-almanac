@@ -1,17 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 420" role="img" aria-label="Joshua's Blog logo">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#d8ffb3"/>
-      <stop offset="1" stop-color="#9effc8"/>
-    </linearGradient>
-  </defs>
-  <g fill="none" stroke="url(#g)" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M36 54c10-20 34-30 58-24 22 5 40 24 46 45-17-8-29-9-42-8-17 1-30 7-44 16" stroke-width="8"/>
-    <path d="M54 84c14-10 26-14 40-14 10 0 18 2 29 7" stroke-width="5" opacity=".9"/>
-    <path d="M80 98v250c0 17-12 30-29 30H20" stroke-width="8"/>
-    <path d="M93 100v246c0 16-11 28-27 28H31" stroke-width="6" opacity=".95"/>
-    <path d="M106 104v241c0 14-10 24-24 24H43" stroke-width="4.8" opacity=".9"/>
-    <path d="M118 108v236c0 12-9 21-21 21H56" stroke-width="3.6" opacity=".9"/>
-    <path d="M20 377h34" stroke-width="8"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200"><rect width="200" height="200" fill="url('#gradient')"></rect><defs><linearGradient id="gradient" gradientTransform="rotate(45 0.5 0.5)"><stop offset="0%" stop-color="#ffffff"></stop><stop offset="100%" stop-color="#ffffff"></stop></linearGradient></defs><g><g fill="#37af61" transform="matrix(5.207503126302626,0,0,5.207503126302626,37.171044351330096,136.50631462210862)" stroke="#000000" stroke-width="0.2"><path d="M6.74-4.46L6.74-14.22L10.16-14.22L10.16-4.46Q10.16-3.11 9.53-2.04Q8.90-0.98 7.77-0.39Q6.64 0.20 5.25 0.20L5.25 0.20Q2.93 0.20 1.64-0.98Q0.35-2.15 0.35-4.30L0.35-4.30L3.79-4.30Q3.79-3.32 4.13-2.88Q4.46-2.44 5.25-2.44L5.25-2.44Q5.97-2.44 6.35-2.97Q6.74-3.51 6.74-4.46L6.74-4.46ZM20.11 0L17.60-5.02L15.74-5.02L15.74 0L12.31 0L12.31-14.22L17.91-14.22Q20.44-14.22 21.87-13.10Q23.29-11.97 23.29-9.92L23.29-9.92Q23.29-8.44 22.69-7.46Q22.09-6.48 20.81-5.88L20.81-5.88L23.78-0.15L23.78 0L20.11 0ZM15.74-11.57L15.74-7.67L17.91-7.67Q18.89-7.67 19.38-8.18Q19.87-8.69 19.87-9.61Q19.87-10.53 19.38-11.05Q18.88-11.57 17.91-11.57L17.91-11.57L15.74-11.57Z"></path></g></g></svg>
