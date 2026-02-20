@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 420" role="img" aria-label="Joshua's Blog logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d8ffb3"/>
+      <stop offset="1" stop-color="#9effc8"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#g)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M36 54c10-20 34-30 58-24 22 5 40 24 46 45-17-8-29-9-42-8-17 1-30 7-44 16" stroke-width="8"/>
+    <path d="M54 84c14-10 26-14 40-14 10 0 18 2 29 7" stroke-width="5" opacity=".9"/>
+    <path d="M80 98v250c0 17-12 30-29 30H20" stroke-width="8"/>
+    <path d="M93 100v246c0 16-11 28-27 28H31" stroke-width="6" opacity=".95"/>
+    <path d="M106 104v241c0 14-10 24-24 24H43" stroke-width="4.8" opacity=".9"/>
+    <path d="M118 108v236c0 12-9 21-21 21H56" stroke-width="3.6" opacity=".9"/>
+    <path d="M20 377h34" stroke-width="8"/>
+  </g>
+</svg>
