@@ -3,29 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Akpan's Almanac — a modern Y2K-inspired home for blogs, poems, and music streaming." />
+  <meta name="description" content="Joshua's Blog — a modern Y2K-inspired home for blogs, poems, and music streaming." />
   <meta name="theme-color" content="#0d5c3e" />
-  <title>Akpan's Almanac</title>
+  <title>Joshua's Blog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="logo.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="ambient" aria-hidden="true"></div>
 
   <header class="shell hero">
-    <p class="chip">Y2K REIMAGINED</p>
-    <h1>Akpan's Almanac</h1>
+    <button type="button" id="top-signout" class="btn btn-glass top-signout" hidden>Reader View</button>
+    <p class="chip" id="mode-chip">READER VIEW</p>
+    <img class="brand-logo" src="logo.svg" alt="Joshua's Blog logo" />
+    <h1>Joshua's Blog</h1>
     <p class="hero-copy">A sleek digital sanctuary for blogs, poems, and music. Built for storytelling, mood, and late-night streaming sessions.</p>
     <div class="hero-actions">
-      <a href="#compose" class="btn btn-primary">Create a Post</a>
+      <a href="#admin" class="btn btn-primary">Log In as Admin</a>
       <a href="#feed" class="btn btn-glass">Explore the Feed</a>
     </div>
   </header>
 
   <main class="layout">
-    <section class="shell panel" id="compose">
+    <section class="shell panel" id="admin">
+      <div class="panel-head">
+        <h2>Admin Login</h2>
+        <p id="admin-status" class="admin-status">Reader mode. Sign in to manage posts.</p>
+      </div>
+
+      <div class="admin-controls">
+        <div class="password-row">
+          <input type="password" id="admin-password" placeholder="Enter your admin password" />
+          <button type="button" class="btn btn-glass password-toggle" id="toggle-password">Show</button>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="sign-in-admin">Sign In</button>
+        <button type="button" class="btn btn-glass" id="forgot-password">Forgot Password?</button>
+
+        <div id="password-setup" class="password-setup">
+          <label class="hint-label" for="admin-hint">
+            Password hint (shown in forgot password)
+            <input type="text" id="admin-hint" placeholder="e.g., favorite album + year" maxlength="80" />
+          </label>
+          <button type="button" class="btn btn-glass" id="set-password">Set Password</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell panel" id="compose" hidden>
       <div class="panel-head">
         <h2>Drop Something Beautiful</h2>
         <p>Publish in seconds. New posts are saved in your browser automatically.</p>
@@ -54,6 +82,7 @@
         <label>
           Media URL (optional for blogs/poems, audio URL for music)
           <input type="url" name="media" placeholder="https://..." />
+          <small class="field-help">For music posts: direct .mp3/.wav links stream in-page. SoundCloud/BandLab links open as external links.</small>
         </label>
 
         <label>
@@ -61,7 +90,7 @@
           <input type="url" name="image" placeholder="https://..." />
         </label>
 
-        <button type="submit" class="btn btn-primary">Publish to Almanac</button>
+        <button type="submit" class="btn btn-primary">Publish to Blog</button>
       </form>
     </section>
 
@@ -80,8 +109,33 @@
     </section>
   </main>
 
+  <div class="modal-backdrop" id="delete-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+      <h3 id="delete-title">Delete this entry?</h3>
+      <p>This action is permanent. Once deleted, this entry cannot be recovered.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-glass" id="cancel-delete">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-delete">Delete Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="hint-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="hint-title">
+      <h3 id="hint-title">Password Hint</h3>
+      <p id="hint-content">No hint has been set yet.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-glass" id="close-hint">Close</button>
+      </div>
+    </div>
+  </div>
+
   <template id="post-template">
     <article class="post-card">
+      <button type="button" class="post-delete" aria-label="Delete entry">
+        <span aria-hidden="true">×</span>
+        <span class="delete-tip">Delete entry</span>
+      </button>
       <div class="post-meta">
         <span class="post-type"></span>
         <time class="post-time"></time>
@@ -95,7 +149,10 @@
   </template>
 
   <script>
-    const STORAGE_KEY = 'akpan-almanac-posts-v1';
+    const STORAGE_KEY = 'joshua-blog-posts-v1';
+    const ADMIN_PASSWORD_KEY = 'joshua-blog-admin-password';
+    const ADMIN_UNLOCKED_KEY = 'joshua-blog-admin-unlocked';
+    const ADMIN_HINT_KEY = 'joshua-blog-admin-hint';
 
     const starterPosts = [
       {
@@ -128,19 +185,43 @@
     ];
 
     const postForm = document.querySelector('#post-form');
+    const composeSection = document.querySelector('#compose');
+    const adminSection = document.querySelector('#admin');
+    const topSignoutButton = document.querySelector('#top-signout');
+    const modeChip = document.querySelector('#mode-chip');
     const postsContainer = document.querySelector('#posts');
     const postTemplate = document.querySelector('#post-template');
     const filterButtons = document.querySelectorAll('#filters .pill');
+    const adminStatus = document.querySelector('#admin-status');
+    const adminPasswordInput = document.querySelector('#admin-password');
+    const signInAdminButton = document.querySelector('#sign-in-admin');
+    const setPasswordButton = document.querySelector('#set-password');
+    const forgotPasswordButton = document.querySelector('#forgot-password');
+    const passwordSetup = document.querySelector('#password-setup');
+    const togglePasswordButton = document.querySelector('#toggle-password');
+    const adminHintInput = document.querySelector('#admin-hint');
+    const deleteModal = document.querySelector('#delete-modal');
+    const cancelDeleteButton = document.querySelector('#cancel-delete');
+    const confirmDeleteButton = document.querySelector('#confirm-delete');
+    const hintModal = document.querySelector('#hint-modal');
+    const hintContent = document.querySelector('#hint-content');
+    const closeHintButton = document.querySelector('#close-hint');
 
     let filter = 'all';
     let posts = loadPosts();
+    let isAdminUnlocked = sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true';
+    let pendingDeleteId = null;
 
+    syncAdminUi();
     renderPosts();
 
     postForm.addEventListener('submit', (event) => {
       event.preventDefault();
-      const formData = new FormData(postForm);
+      if (!isAdminUnlocked) {
+        return;
+      }
 
+      const formData = new FormData(postForm);
       const post = {
         id: crypto.randomUUID(),
         type: formData.get('type'),
@@ -166,6 +247,117 @@
       });
     });
 
+    togglePasswordButton.addEventListener('click', () => {
+      const showPassword = adminPasswordInput.type === 'password';
+      adminPasswordInput.type = showPassword ? 'text' : 'password';
+      togglePasswordButton.textContent = showPassword ? 'Hide' : 'Show';
+    });
+
+    signInAdminButton.addEventListener('click', () => {
+      const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
+      const enteredPassword = adminPasswordInput.value.trim();
+
+      if (!storedPassword) {
+        alert('No password is set yet. Set one first.');
+        return;
+      }
+
+      if (enteredPassword !== storedPassword) {
+        alert('Wrong password.');
+        return;
+      }
+
+      isAdminUnlocked = true;
+      sessionStorage.setItem(ADMIN_UNLOCKED_KEY, 'true');
+      adminPasswordInput.value = '';
+      adminPasswordInput.type = 'password';
+      togglePasswordButton.textContent = 'Show';
+      syncAdminUi();
+      renderPosts();
+      composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    setPasswordButton.addEventListener('click', () => {
+      const nextPassword = adminPasswordInput.value.trim();
+      if (!nextPassword) {
+        alert('Enter a password to set.');
+        return;
+      }
+
+      localStorage.setItem(ADMIN_PASSWORD_KEY, nextPassword);
+      localStorage.setItem(ADMIN_HINT_KEY, adminHintInput.value.trim());
+      isAdminUnlocked = true;
+      sessionStorage.setItem(ADMIN_UNLOCKED_KEY, 'true');
+      adminPasswordInput.value = '';
+      adminHintInput.value = '';
+      adminPasswordInput.type = 'password';
+      togglePasswordButton.textContent = 'Show';
+      syncAdminUi();
+      renderPosts();
+      composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    forgotPasswordButton.addEventListener('click', () => {
+      const hint = localStorage.getItem(ADMIN_HINT_KEY);
+      hintContent.textContent = hint ? `Hint: ${hint}` : 'No hint has been set yet.';
+      hintModal.hidden = false;
+    });
+
+    closeHintButton.addEventListener('click', () => {
+      hintModal.hidden = true;
+    });
+
+    topSignoutButton.addEventListener('click', () => {
+      isAdminUnlocked = false;
+      sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
+      adminPasswordInput.value = '';
+      adminHintInput.value = '';
+      adminPasswordInput.type = 'password';
+      togglePasswordButton.textContent = 'Show';
+      syncAdminUi();
+      renderPosts();
+      document.querySelector('#feed').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    postsContainer.addEventListener('click', (event) => {
+      const deleteButton = event.target.closest('.post-delete');
+      if (!deleteButton || !isAdminUnlocked) {
+        return;
+      }
+
+      pendingDeleteId = deleteButton.dataset.postId;
+      deleteModal.hidden = false;
+    });
+
+    cancelDeleteButton.addEventListener('click', () => {
+      pendingDeleteId = null;
+      deleteModal.hidden = true;
+    });
+
+    confirmDeleteButton.addEventListener('click', () => {
+      if (!pendingDeleteId) {
+        deleteModal.hidden = true;
+        return;
+      }
+
+      posts = posts.filter((post) => post.id !== pendingDeleteId);
+      savePosts(posts);
+      pendingDeleteId = null;
+      deleteModal.hidden = true;
+      renderPosts();
+    });
+
+    [hintModal, deleteModal].forEach((modal) => {
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+          modal.hidden = true;
+          if (modal === deleteModal) {
+            pendingDeleteId = null;
+          }
+        }
+      });
+    });
+
     function loadPosts() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -185,7 +377,6 @@
 
     function renderPosts() {
       postsContainer.innerHTML = '';
-
       const filtered = posts.filter((post) => filter === 'all' || post.type === filter);
 
       if (!filtered.length) {
@@ -203,6 +394,10 @@
         const image = node.querySelector('.post-image');
         const link = node.querySelector('.post-link');
         const audio = node.querySelector('.post-audio');
+        const deleteButton = node.querySelector('.post-delete');
+
+        deleteButton.dataset.postId = post.id;
+        deleteButton.hidden = !isAdminUnlocked;
 
         if (post.image) {
           image.src = post.image;
@@ -211,11 +406,11 @@
         }
 
         if (post.media) {
-          if (post.type === 'music') {
+          if (post.type === 'music' && isDirectAudioUrl(post.media)) {
             audio.src = post.media;
             link.remove();
           } else {
-            link.textContent = 'Open media ↗';
+            link.textContent = post.type === 'music' ? 'Open song page ↗' : 'Open media ↗';
             link.href = post.media;
             audio.remove();
           }
@@ -226,6 +421,32 @@
 
         postsContainer.append(node);
       });
+    }
+
+    function syncAdminUi() {
+      const hasPassword = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
+
+      composeSection.hidden = !isAdminUnlocked;
+      adminSection.hidden = isAdminUnlocked;
+      topSignoutButton.hidden = !isAdminUnlocked;
+      passwordSetup.hidden = hasPassword;
+      signInAdminButton.disabled = !hasPassword;
+      forgotPasswordButton.disabled = !hasPassword;
+
+      document.body.classList.toggle('admin-mode', isAdminUnlocked);
+      modeChip.textContent = isAdminUnlocked ? 'ADMIN ACCESS' : 'READER VIEW';
+
+      if (!hasPassword) {
+        adminStatus.textContent = 'Set your password once, then use Sign In going forward.';
+      } else if (isAdminUnlocked) {
+        adminStatus.textContent = 'Admin mode active.';
+      } else {
+        adminStatus.textContent = 'Reader mode. Sign in to manage posts.';
+      }
+    }
+
+    function isDirectAudioUrl(url) {
+      return /\.(mp3|wav|ogg|m4a)(\?.*)?$/i.test(url);
     }
 
     function formatDate(isoDate) {
