@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Akpan's Almanac — a modern Y2K-inspired home for blogs, poems, and music streaming." />
+  <meta name="theme-color" content="#0d5c3e" />
+  <title>Akpan's Almanac</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <header class="shell hero">
+    <p class="chip">Y2K REIMAGINED</p>
+    <h1>Akpan's Almanac</h1>
+    <p class="hero-copy">A sleek digital sanctuary for blogs, poems, and music. Built for storytelling, mood, and late-night streaming sessions.</p>
+    <div class="hero-actions">
+      <a href="#compose" class="btn btn-primary">Create a Post</a>
+      <a href="#feed" class="btn btn-glass">Explore the Feed</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="shell panel" id="compose">
+      <div class="panel-head">
+        <h2>Drop Something Beautiful</h2>
+        <p>Publish in seconds. New posts are saved in your browser automatically.</p>
+      </div>
+
+      <form id="post-form" class="composer">
+        <label>
+          Content Type
+          <select name="type" required>
+            <option value="blog">Blog</option>
+            <option value="poem">Poem</option>
+            <option value="music">Music</option>
+          </select>
+        </label>
+
+        <label>
+          Title
+          <input type="text" name="title" placeholder="Neon Rain Over Lagos" required maxlength="90" />
+        </label>
+
+        <label>
+          Description / Body
+          <textarea name="body" rows="6" placeholder="Write your post, poem, or lyrics notes..." required></textarea>
+        </label>
+
+        <label>
+          Media URL (optional for blogs/poems, audio URL for music)
+          <input type="url" name="media" placeholder="https://..." />
+        </label>
+
+        <label>
+          Cover Image URL (optional)
+          <input type="url" name="image" placeholder="https://..." />
+        </label>
+
+        <button type="submit" class="btn btn-primary">Publish to Almanac</button>
+      </form>
+    </section>
+
+    <section class="shell panel" id="feed">
+      <div class="panel-head feed-head">
+        <h2>Chronicle Feed</h2>
+        <div class="pill-group" id="filters">
+          <button class="pill active" data-filter="all">All</button>
+          <button class="pill" data-filter="blog">Blogs</button>
+          <button class="pill" data-filter="poem">Poems</button>
+          <button class="pill" data-filter="music">Music</button>
+        </div>
+      </div>
+
+      <div id="posts" class="post-grid"></div>
+    </section>
+  </main>
+
+  <template id="post-template">
+    <article class="post-card">
+      <div class="post-meta">
+        <span class="post-type"></span>
+        <time class="post-time"></time>
+      </div>
+      <h3 class="post-title"></h3>
+      <img class="post-image" alt="Post cover image" loading="lazy" />
+      <p class="post-body"></p>
+      <a class="post-link" target="_blank" rel="noreferrer noopener"></a>
+      <audio class="post-audio" controls></audio>
+    </article>
+  </template>
+
+  <script>
+    const STORAGE_KEY = 'akpan-almanac-posts-v1';
+
+    const starterPosts = [
+      {
+        id: crypto.randomUUID(),
+        type: 'blog',
+        title: 'Future Nostalgia: Why Y2K Design Still Hits',
+        body: 'The chrome, the glow, the dreamy gradients — Y2K wasn\'t just style. It was optimism rendered in pixels. This Almanac is my tribute to that energy.',
+        media: '',
+        image: 'https://images.unsplash.com/photo-1516117172878-fd2c41f4a759?auto=format&fit=crop&w=1400&q=80',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'poem',
+        title: 'Green Glass Nights',
+        body: 'On screens of emerald light\\nI leave my pulse in every line\\nA city hums, a playlist spins\\nTomorrow starts where memory ends.',
+        media: '',
+        image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1400&q=80',
+        createdAt: new Date(Date.now() - 3600 * 1000 * 7).toISOString()
+      },
+      {
+        id: crypto.randomUUID(),
+        type: 'music',
+        title: 'Midnight Circuit (Demo)',
+        body: 'A dreamy synth sketch with warm bass and floating pads.',
+        media: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1400&q=80',
+        createdAt: new Date(Date.now() - 3600 * 1000 * 20).toISOString()
+      }
+    ];
+
+    const postForm = document.querySelector('#post-form');
+    const postsContainer = document.querySelector('#posts');
+    const postTemplate = document.querySelector('#post-template');
+    const filterButtons = document.querySelectorAll('#filters .pill');
+
+    let filter = 'all';
+    let posts = loadPosts();
+
+    renderPosts();
+
+    postForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(postForm);
+
+      const post = {
+        id: crypto.randomUUID(),
+        type: formData.get('type'),
+        title: formData.get('title').trim(),
+        body: formData.get('body').trim(),
+        media: formData.get('media').trim(),
+        image: formData.get('image').trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      posts.unshift(post);
+      savePosts(posts);
+      renderPosts();
+      postForm.reset();
+    });
+
+    filterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        filter = button.dataset.filter;
+        filterButtons.forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        renderPosts();
+      });
+    });
+
+    function loadPosts() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(starterPosts));
+          return starterPosts;
+        }
+        return JSON.parse(raw);
+      } catch {
+        return starterPosts;
+      }
+    }
+
+    function savePosts(nextPosts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPosts));
+    }
+
+    function renderPosts() {
+      postsContainer.innerHTML = '';
+
+      const filtered = posts.filter((post) => filter === 'all' || post.type === filter);
+
+      if (!filtered.length) {
+        postsContainer.innerHTML = '<p class="empty-state">Nothing here yet — publish the first piece in this category.</p>';
+        return;
+      }
+
+      filtered.forEach((post) => {
+        const node = postTemplate.content.cloneNode(true);
+        node.querySelector('.post-type').textContent = post.type.toUpperCase();
+        node.querySelector('.post-time').textContent = formatDate(post.createdAt);
+        node.querySelector('.post-title').textContent = post.title;
+        node.querySelector('.post-body').textContent = post.body;
+
+        const image = node.querySelector('.post-image');
+        const link = node.querySelector('.post-link');
+        const audio = node.querySelector('.post-audio');
+
+        if (post.image) {
+          image.src = post.image;
+        } else {
+          image.remove();
+        }
+
+        if (post.media) {
+          if (post.type === 'music') {
+            audio.src = post.media;
+            link.remove();
+          } else {
+            link.textContent = 'Open media ↗';
+            link.href = post.media;
+            audio.remove();
+          }
+        } else {
+          link.remove();
+          audio.remove();
+        }
+
+        postsContainer.append(node);
+      });
+    }
+
+    function formatDate(isoDate) {
+      return new Intl.DateTimeFormat('en', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(new Date(isoDate));
+    }
+  </script>
+</body>
+</html>
