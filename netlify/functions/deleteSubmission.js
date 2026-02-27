@@ -1,5 +1,3 @@
-const fetch = require("node-fetch");
-
 exports.handler = async (event) => {
   const token = process.env.GITHUB_TOKEN;
   const repo = "joshunkan-dev/akpans-almanac";
