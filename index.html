@@ -336,5 +336,89 @@ if (openAdminLoginButton && adminModal) {
       adminStatus.textContent = 'Reader mode. Sign in to manage posts.';
     }
   }
+
+  // -----------------------------
+// ADMIN SYSTEM LOGIC
+// -----------------------------
+
+// Toggle password visibility
+togglePasswordButton.addEventListener('click', () => {
+  const isHidden = adminPasswordInput.type === 'password';
+  adminPasswordInput.type = isHidden ? 'text' : 'password';
+  togglePasswordButton.textContent = isHidden ? 'Hide' : 'Show';
+});
+
+// Set password (first time only)
+setPasswordButton.addEventListener('click', () => {
+  const password = adminPasswordInput.value.trim();
+  const hint = adminHintInput.value.trim();
+
+  if (!password) {
+    alert('Enter a password first.');
+    return;
+  }
+
+  localStorage.setItem(ADMIN_PASSWORD_KEY, password);
+  if (hint) localStorage.setItem(ADMIN_HINT_KEY, hint);
+
+  alert('Password set successfully.');
+  adminPasswordInput.value = '';
+  adminHintInput.value = '';
+
+  syncAdminUi();
+});
+
+// Sign in
+signInAdminButton.addEventListener('click', () => {
+  const savedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
+  const enteredPassword = adminPasswordInput.value.trim();
+
+  if (!savedPassword) return;
+
+  if (enteredPassword === savedPassword) {
+    isAdminUnlocked = true;
+    sessionStorage.setItem(ADMIN_UNLOCKED_KEY, 'true');
+    adminModal.hidden = true;
+    adminPasswordInput.value = '';
+    syncAdminUi();
+    renderPosts();
+  } else {
+    alert('Incorrect password.');
+  }
+});
+
+// Forgot password
+forgotPasswordButton.addEventListener('click', () => {
+  const hint = localStorage.getItem(ADMIN_HINT_KEY);
+  hintContent.textContent = hint || 'No hint has been set.';
+  hintModal.hidden = false;
+});
+
+// Close hint modal
+closeHintButton.addEventListener('click', () => {
+  hintModal.hidden = true;
+});
+
+// Sign out
+topSignoutButton.addEventListener('click', () => {
+  isAdminUnlocked = false;
+  sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
+  syncAdminUi();
+  renderPosts();
+});
+
+// Cancel delete modal
+cancelDeleteButton.addEventListener('click', () => {
+  pendingDeleteId = null;
+  deleteModal.hidden = true;
+});
+
+// Close admin modal when clicking outside card
+adminModal.addEventListener('click', (e) => {
+  if (e.target === adminModal) {
+    adminModal.hidden = true;
+  }
+});
 </script>
+
 
