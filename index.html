@@ -188,6 +188,12 @@
     syncAdminUi();
     renderPosts();
   }
+  // --- Restore Admin Login Modal Trigger ---
+if (openAdminLoginButton && adminModal) {
+  openAdminLoginButton.addEventListener('click', () => {
+    adminModal.hidden = false;
+  });
+}
 
   async function loadPostsFromServer() {
     try {
@@ -331,3 +337,4 @@
     }
   }
 </script>
+
