@@ -37,9 +37,9 @@
         <label>
           Content Type
           <select name="type" required>
+            <option value="music">Music</option>
             <option value="blog">Blog</option>
             <option value="poem">Poem</option>
-            <option value="music">Music</option>
           </select>
         </label>
 
@@ -72,10 +72,10 @@
       <div class="panel-head feed-head">
         <h2>Chronicle Feed</h2>
         <div class="pill-group" id="filters">
-          <button class="pill active" data-filter="all">All</button>
+          <button class="pill" data-filter="music">Music</button>
           <button class="pill" data-filter="blog">Blogs</button>
           <button class="pill" data-filter="poem">Poems</button>
-          <button class="pill" data-filter="music">Music</button>
+          <button class="pill active" data-filter="all">All</button>
         </div>
       </div>
 
@@ -420,5 +420,6 @@ adminModal.addEventListener('click', (e) => {
   }
 });
 </script>
+
 
 
