@@ -148,367 +148,186 @@
   </template>
 
   <script>
-    const STORAGE_KEY = 'joshua-blog-posts-v1';
-    const ADMIN_PASSWORD_KEY = 'joshua-blog-admin-password';
-    const ADMIN_UNLOCKED_KEY = 'joshua-blog-admin-unlocked';
-    const ADMIN_HINT_KEY = 'joshua-blog-admin-hint';
+  const ADMIN_PASSWORD_KEY = 'joshua-blog-admin-password';
+  const ADMIN_UNLOCKED_KEY = 'joshua-blog-admin-unlocked';
+  const ADMIN_HINT_KEY = 'joshua-blog-admin-hint';
 
-    const starterPosts = [
-      {
-        id: crypto.randomUUID(),
-        type: 'blog',
-        title: 'Future Nostalgia: Why Y2K Design Still Hits',
-        body: 'The chrome, the glow, the dreamy gradients — Y2K wasn\'t just style. It was optimism rendered in pixels. This Almanac is my tribute to that energy.',
-        media: '',
-        image: 'https://images.unsplash.com/photo-1516117172878-fd2c41f4a759?auto=format&fit=crop&w=1400&q=80',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        type: 'poem',
-        title: 'Green Glass Nights',
-        body: 'On screens of emerald light\\nI leave my pulse in every line\\nA city hums, a playlist spins\\nTomorrow starts where memory ends.',
-        media: '',
-        image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1400&q=80',
-        createdAt: new Date(Date.now() - 3600 * 1000 * 7).toISOString()
-      },
-      {
-        id: crypto.randomUUID(),
-        type: 'music',
-        title: 'Midnight Circuit (Demo)',
-        body: 'A dreamy synth sketch with warm bass and floating pads.',
-        media: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1400&q=80',
-        createdAt: new Date(Date.now() - 3600 * 1000 * 20).toISOString()
-      }
-    ];
+  const postForm = document.querySelector('#post-form');
+  const composeSection = document.querySelector('#compose');
+  const openAdminLoginButton = document.querySelector('#open-admin-login');
+  const adminModal = document.querySelector('#admin-modal');
+  const topSignoutButton = document.querySelector('#top-signout');
+  const modeChip = document.querySelector('#mode-chip');
+  const postsContainer = document.querySelector('#posts');
+  const postTemplate = document.querySelector('#post-template');
+  const filterButtons = document.querySelectorAll('#filters .pill');
+  const adminStatus = document.querySelector('#admin-status');
+  const adminPasswordInput = document.querySelector('#admin-password');
+  const signInAdminButton = document.querySelector('#sign-in-admin');
+  const setPasswordButton = document.querySelector('#set-password');
+  const forgotPasswordButton = document.querySelector('#forgot-password');
+  const passwordSetup = document.querySelector('#password-setup');
+  const togglePasswordButton = document.querySelector('#toggle-password');
+  const adminHintInput = document.querySelector('#admin-hint');
+  const deleteModal = document.querySelector('#delete-modal');
+  const cancelDeleteButton = document.querySelector('#cancel-delete');
+  const confirmDeleteButton = document.querySelector('#confirm-delete');
+  const hintModal = document.querySelector('#hint-modal');
+  const hintContent = document.querySelector('#hint-content');
+  const closeHintButton = document.querySelector('#close-hint');
 
-    const postForm = document.querySelector('#post-form');
-    const composeSection = document.querySelector('#compose');
-    const openAdminLoginButton = document.querySelector('#open-admin-login');
-    const adminModal = document.querySelector('#admin-modal');
-    const topSignoutButton = document.querySelector('#top-signout');
-    const modeChip = document.querySelector('#mode-chip');
-    const postsContainer = document.querySelector('#posts');
-    const postTemplate = document.querySelector('#post-template');
-    const filterButtons = document.querySelectorAll('#filters .pill');
-    const adminStatus = document.querySelector('#admin-status');
-    const adminPasswordInput = document.querySelector('#admin-password');
-    const signInAdminButton = document.querySelector('#sign-in-admin');
-    const setPasswordButton = document.querySelector('#set-password');
-    const forgotPasswordButton = document.querySelector('#forgot-password');
-    const passwordSetup = document.querySelector('#password-setup');
-    const togglePasswordButton = document.querySelector('#toggle-password');
-    const adminHintInput = document.querySelector('#admin-hint');
-    const deleteModal = document.querySelector('#delete-modal');
-    const cancelDeleteButton = document.querySelector('#cancel-delete');
-    const confirmDeleteButton = document.querySelector('#confirm-delete');
-    const hintModal = document.querySelector('#hint-modal');
-    const hintContent = document.querySelector('#hint-content');
-    const closeHintButton = document.querySelector('#close-hint');
+  let filter = 'all';
+  let posts = [];
+  let isAdminUnlocked = sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true';
+  let pendingDeleteId = null;
 
-    let filter = 'all';
-    let posts = loadPosts();
-    let isAdminUnlocked = sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true';
-    let pendingDeleteId = null;
+  init();
 
+  async function init() {
+    await loadPostsFromServer();
     syncAdminUi();
     renderPosts();
+  }
 
-    postForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      if (!isAdminUnlocked) {
-        return;
-      }
+  async function loadPostsFromServer() {
+    try {
+      const res = await fetch('/.netlify/functions/getSubmissions');
+      posts = await res.json();
+    } catch {
+      posts = [];
+    }
+  }
 
-      const formData = new FormData(postForm);
-      const post = {
-        id: crypto.randomUUID(),
-        type: formData.get('type'),
-        title: formData.get('title').trim(),
-        body: formData.get('body').trim(),
-        media: formData.get('media').trim(),
-        image: formData.get('image').trim(),
-        createdAt: new Date().toISOString()
-      };
-
-      posts.unshift(post);
-      savePosts(posts);
-      renderPosts();
-      postForm.reset();
+  async function savePostToServer(post) {
+    await fetch('/.netlify/functions/saveSubmission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(post)
     });
+  }
 
-    filterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        filter = button.dataset.filter;
-        filterButtons.forEach((item) => item.classList.remove('active'));
-        button.classList.add('active');
-        renderPosts();
-      });
+  async function deletePostFromServer(id) {
+    await fetch('/.netlify/functions/deleteSubmission', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
     });
+  }
 
-    openAdminLoginButton.addEventListener('click', () => {
-      if (isAdminUnlocked) {
-        composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        return;
-      }
-      adminModal.hidden = false;
-    });
+  postForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!isAdminUnlocked) return;
 
-    togglePasswordButton.addEventListener('click', () => {
-      const showPassword = adminPasswordInput.type === 'password';
-      adminPasswordInput.type = showPassword ? 'text' : 'password';
-      togglePasswordButton.textContent = showPassword ? 'Hide' : 'Show';
-    });
+    const formData = new FormData(postForm);
 
-    signInAdminButton.addEventListener('click', () => {
-      const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
-      const enteredPassword = adminPasswordInput.value.trim();
+    const post = {
+      id: crypto.randomUUID(),
+      type: formData.get('type'),
+      title: formData.get('title').trim(),
+      body: formData.get('body').trim(),
+      media: formData.get('media').trim(),
+      image: formData.get('image').trim(),
+      createdAt: new Date().toISOString()
+    };
 
-      if (!storedPassword) {
-        alert('No password is set yet. Set one first.');
-        return;
-      }
+    posts.unshift(post);
+    await savePostToServer(post);
+    renderPosts();
+    postForm.reset();
+  });
 
-      if (enteredPassword !== storedPassword) {
-        alert('Wrong password.');
-        return;
-      }
+  confirmDeleteButton.addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
 
-      isAdminUnlocked = true;
-      sessionStorage.setItem(ADMIN_UNLOCKED_KEY, 'true');
-      adminPasswordInput.value = '';
-      adminPasswordInput.type = 'password';
-      togglePasswordButton.textContent = 'Show';
-      syncAdminUi();
-      renderPosts();
-      adminModal.hidden = true;
-      composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    posts = posts.filter(p => p.id !== pendingDeleteId);
+    await deletePostFromServer(pendingDeleteId);
 
-    setPasswordButton.addEventListener('click', () => {
-      const nextPassword = adminPasswordInput.value.trim();
-      if (!nextPassword) {
-        alert('Enter a password to set.');
-        return;
-      }
+    pendingDeleteId = null;
+    deleteModal.hidden = true;
+    renderPosts();
+  });
 
-      localStorage.setItem(ADMIN_PASSWORD_KEY, nextPassword);
-      localStorage.setItem(ADMIN_HINT_KEY, adminHintInput.value.trim());
-      isAdminUnlocked = true;
-      sessionStorage.setItem(ADMIN_UNLOCKED_KEY, 'true');
-      adminPasswordInput.value = '';
-      adminHintInput.value = '';
-      adminPasswordInput.type = 'password';
-      togglePasswordButton.textContent = 'Show';
-      syncAdminUi();
-      renderPosts();
-      adminModal.hidden = true;
-      composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-
-    forgotPasswordButton.addEventListener('click', () => {
-      const hint = localStorage.getItem(ADMIN_HINT_KEY);
-      hintContent.textContent = hint ? `Hint: ${hint}` : 'No hint has been set yet.';
-      hintModal.hidden = false;
-    });
-
-    closeHintButton.addEventListener('click', () => {
-      hintModal.hidden = true;
-    });
-
-    topSignoutButton.addEventListener('click', () => {
-      isAdminUnlocked = false;
-      sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
-      adminPasswordInput.value = '';
-      adminHintInput.value = '';
-      adminPasswordInput.type = 'password';
-      togglePasswordButton.textContent = 'Show';
-      syncAdminUi();
-      renderPosts();
-      document.querySelector('#feed').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-
-    postsContainer.addEventListener('click', (event) => {
-      const deleteButton = event.target.closest('.post-delete');
-      if (!deleteButton || !isAdminUnlocked) {
-        return;
-      }
-
-      pendingDeleteId = deleteButton.dataset.postId;
-      deleteModal.hidden = false;
-    });
-
-    cancelDeleteButton.addEventListener('click', () => {
-      pendingDeleteId = null;
-      deleteModal.hidden = true;
-    });
-
-    confirmDeleteButton.addEventListener('click', () => {
-      if (!pendingDeleteId) {
-        deleteModal.hidden = true;
-        return;
-      }
-
-      posts = posts.filter((post) => post.id !== pendingDeleteId);
-      savePosts(posts);
-      pendingDeleteId = null;
-      deleteModal.hidden = true;
+  filterButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      filter = button.dataset.filter;
+      filterButtons.forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
       renderPosts();
     });
+  });
 
-    [adminModal, hintModal, deleteModal].forEach((modal) => {
-      modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
-          modal.hidden = true;
-          if (modal === deleteModal) {
-            pendingDeleteId = null;
-          }
-          if (modal === adminModal) {
-            adminPasswordInput.type = 'password';
-            togglePasswordButton.textContent = 'Show';
-          }
-        }
-      });
-    });
+  function renderPosts() {
+    postsContainer.innerHTML = '';
+    const filtered = posts.filter(p => filter === 'all' || p.type === filter);
 
-    function loadPosts() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(starterPosts));
-          return starterPosts;
-        }
-        return JSON.parse(raw);
-      } catch {
-        return starterPosts;
-      }
+    if (!filtered.length) {
+      postsContainer.innerHTML = '<p class="empty-state">Nothing here yet — publish the first piece in this category.</p>';
+      return;
     }
 
-    function savePosts(nextPosts) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPosts));
-    }
+    filtered.forEach((post) => {
+      const node = postTemplate.content.cloneNode(true);
+      node.querySelector('.post-type').textContent = post.type.toUpperCase();
+      node.querySelector('.post-time').textContent = formatDate(post.createdAt);
+      node.querySelector('.post-title').textContent = post.title;
+      node.querySelector('.post-body').textContent = post.body;
 
-    function renderPosts() {
-      postsContainer.innerHTML = '';
-      const filtered = posts.filter((post) => filter === 'all' || post.type === filter);
+      const image = node.querySelector('.post-image');
+      const link = node.querySelector('.post-link');
+      const audio = node.querySelector('.post-audio');
+      const deleteButton = node.querySelector('.post-delete');
 
-      if (!filtered.length) {
-        postsContainer.innerHTML = '<p class="empty-state">Nothing here yet — publish the first piece in this category.</p>';
-        return;
-      }
+      deleteButton.dataset.postId = post.id;
+      deleteButton.hidden = !isAdminUnlocked;
 
-      filtered.forEach((post) => {
-        const node = postTemplate.content.cloneNode(true);
-        node.querySelector('.post-type').textContent = post.type.toUpperCase();
-        node.querySelector('.post-time').textContent = formatDate(post.createdAt);
-        node.querySelector('.post-title').textContent = post.title;
-        node.querySelector('.post-body').textContent = post.body;
+      if (post.image) image.src = post.image;
+      else image.remove();
 
-        const image = node.querySelector('.post-image');
-        const link = node.querySelector('.post-link');
-        const audio = node.querySelector('.post-audio');
-        const deleteButton = node.querySelector('.post-delete');
-
-        deleteButton.dataset.postId = post.id;
-        deleteButton.hidden = !isAdminUnlocked;
-
-        if (post.image) {
-          image.src = post.image;
-        } else {
-          image.remove();
-        }
-
-        if (post.media) {
-          if (post.type === 'music' && isDirectAudioUrl(post.media)) {
-            audio.src = post.media;
-            link.remove();
-          } else if (post.type === 'music' && isSoundCloudUrl(post.media)) {
-            audio.remove();
-            link.outerHTML = `<iframe width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=${encodeURIComponent(post.media)}"></iframe>`;
-          } else if (post.type === 'music' && isBandLabUrl(post.media)) {
-            audio.remove();
-            const embedUrl = getBandLabEmbedUrl(post.media);
-            if (embedUrl) {
-              link.outerHTML = `<iframe width="100%" height="220" frameborder="0" src="${embedUrl}" allowfullscreen></iframe>`;
-            } else {
-              link.textContent = 'Open BandLab ↗';
-              link.href = post.media;
-            }
-          } else {
-            link.textContent = post.type === 'music' ? 'Open song page ↗' : 'Open media ↗';
-            link.href = post.media;
-            audio.remove();
-          }
-        } else {
+      if (post.media) {
+        if (post.type === 'music' && /\.(mp3|wav|ogg|m4a)(\?.*)?$/i.test(post.media)) {
+          audio.src = post.media;
           link.remove();
+        } else {
+          link.textContent = 'Open media ↗';
+          link.href = post.media;
           audio.remove();
         }
-
-        postsContainer.append(node);
-      });
-    }
-
-    function syncAdminUi() {
-      const hasPassword = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
-
-      composeSection.hidden = !isAdminUnlocked;
-      topSignoutButton.hidden = !isAdminUnlocked;
-      passwordSetup.hidden = hasPassword;
-      signInAdminButton.disabled = !hasPassword;
-      forgotPasswordButton.disabled = !hasPassword;
-
-      document.body.classList.toggle('admin-mode', isAdminUnlocked);
-      modeChip.textContent = isAdminUnlocked ? 'ADMIN ACCESS' : 'READER VIEW';
-
-      if (!hasPassword) {
-        adminStatus.textContent = 'Set your password once, then use Sign In going forward.';
-      } else if (isAdminUnlocked) {
-        adminStatus.textContent = 'Admin mode active.';
       } else {
-        adminStatus.textContent = 'Reader mode. Sign in to manage posts.';
+        link.remove();
+        audio.remove();
       }
+
+      postsContainer.append(node);
+    });
+  }
+
+  function formatDate(isoDate) {
+    return new Intl.DateTimeFormat('en', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    }).format(new Date(isoDate));
+  }
+
+  function syncAdminUi() {
+    const hasPassword = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
+
+    composeSection.hidden = !isAdminUnlocked;
+    topSignoutButton.hidden = !isAdminUnlocked;
+    passwordSetup.hidden = hasPassword;
+    signInAdminButton.disabled = !hasPassword;
+    forgotPasswordButton.disabled = !hasPassword;
+
+    document.body.classList.toggle('admin-mode', isAdminUnlocked);
+    modeChip.textContent = isAdminUnlocked ? 'ADMIN ACCESS' : 'READER VIEW';
+
+    if (!hasPassword) {
+      adminStatus.textContent = 'Set your password once, then use Sign In going forward.';
+    } else if (isAdminUnlocked) {
+      adminStatus.textContent = 'Admin mode active.';
+    } else {
+      adminStatus.textContent = 'Reader mode. Sign in to manage posts.';
     }
-
-    function isDirectAudioUrl(url) {
-      return /\.(mp3|wav|ogg|m4a)(\?.*)?$/i.test(url);
-    }
-
-    function isSoundCloudUrl(url) {
-      return /soundcloud\.com/i.test(url);
-    }
-
-    function isBandLabUrl(url) {
-      return /bandlab\.com/i.test(url);
-    }
-
-    function getBandLabEmbedUrl(url) {
-      try {
-        const parsed = new URL(url);
-        const revId = parsed.searchParams.get('revId');
-        if (!revId) {
-          return '';
-        }
-        return `https://www.bandlab.com/embed/?id=${encodeURIComponent(revId)}`;
-      } catch {
-        return '';
-      }
-    }
-
-    function formatDate(isoDate) {
-      return new Intl.DateTimeFormat('en', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      }).format(new Date(isoDate));
-    }
-  </script>
-</body>
-</html>
-
-
-
-
-
-
+  }
+</script>
