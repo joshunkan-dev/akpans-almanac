@@ -21,37 +21,12 @@
     <h1>Joshua's Room</h1>
     <p class="hero-copy">A sleek digital sanctuary for blogs, poems, and music. Built for storytelling, mood, and late-night streaming sessions.</p>
     <div class="hero-actions">
-      <a href="#admin" class="btn btn-primary">Log In as Admin</a>
+      <button type="button" class="btn btn-primary" id="open-admin-login">Log In as Admin</button>
       <a href="#feed" class="btn btn-glass">Explore the Feed</a>
     </div>
   </header>
 
   <main class="layout">
-    <section class="shell panel" id="admin">
-      <div class="panel-head">
-        <h2>Admin Login</h2>
-        <p id="admin-status" class="admin-status">Reader mode. Sign in to manage posts.</p>
-      </div>
-
-      <div class="admin-controls">
-        <div class="password-row">
-          <input type="password" id="admin-password" placeholder="Enter your admin password" />
-          <button type="button" class="btn btn-glass password-toggle" id="toggle-password">Show</button>
-        </div>
-
-        <button type="button" class="btn btn-primary" id="sign-in-admin">Sign In</button>
-        <button type="button" class="btn btn-glass" id="forgot-password">Forgot Password?</button>
-
-        <div id="password-setup" class="password-setup">
-          <label class="hint-label" for="admin-hint">
-            Password hint (shown in forgot password)
-            <input type="text" id="admin-hint" placeholder="e.g., favorite album + year" maxlength="80" />
-          </label>
-          <button type="button" class="btn btn-glass" id="set-password">Set Password</button>
-        </div>
-      </div>
-    </section>
-
     <section class="shell panel" id="compose" hidden>
       <div class="panel-head">
         <h2>Drop Something Beautiful</h2>
@@ -107,6 +82,31 @@
       <div id="posts" class="post-grid"></div>
     </section>
   </main>
+
+  <div class="modal-backdrop" id="admin-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="admin-title">
+      <h3 id="admin-title">Admin Login</h3>
+      <p id="admin-status" class="admin-status">Reader mode. Sign in to manage posts.</p>
+
+      <div class="admin-controls">
+        <div class="password-row">
+          <input type="password" id="admin-password" placeholder="Enter your admin password" />
+          <button type="button" class="btn btn-glass password-toggle" id="toggle-password">Show</button>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="sign-in-admin">Sign In</button>
+        <button type="button" class="btn btn-glass" id="forgot-password">Forgot Password?</button>
+
+        <div id="password-setup" class="password-setup">
+          <label class="hint-label" for="admin-hint">
+            Password hint (shown in forgot password)
+            <input type="text" id="admin-hint" placeholder="e.g., favorite album + year" maxlength="80" />
+          </label>
+          <button type="button" class="btn btn-glass" id="set-password">Set Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="delete-modal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="delete-title">
@@ -185,7 +185,8 @@
 
     const postForm = document.querySelector('#post-form');
     const composeSection = document.querySelector('#compose');
-    const adminSection = document.querySelector('#admin');
+    const openAdminLoginButton = document.querySelector('#open-admin-login');
+    const adminModal = document.querySelector('#admin-modal');
     const topSignoutButton = document.querySelector('#top-signout');
     const modeChip = document.querySelector('#mode-chip');
     const postsContainer = document.querySelector('#posts');
@@ -246,6 +247,14 @@
       });
     });
 
+    openAdminLoginButton.addEventListener('click', () => {
+      if (isAdminUnlocked) {
+        composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      adminModal.hidden = false;
+    });
+
     togglePasswordButton.addEventListener('click', () => {
       const showPassword = adminPasswordInput.type === 'password';
       adminPasswordInput.type = showPassword ? 'text' : 'password';
@@ -273,6 +282,7 @@
       togglePasswordButton.textContent = 'Show';
       syncAdminUi();
       renderPosts();
+      adminModal.hidden = true;
       composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
@@ -293,6 +303,7 @@
       togglePasswordButton.textContent = 'Show';
       syncAdminUi();
       renderPosts();
+      adminModal.hidden = true;
       composeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
@@ -346,12 +357,16 @@
       renderPosts();
     });
 
-    [hintModal, deleteModal].forEach((modal) => {
+    [adminModal, hintModal, deleteModal].forEach((modal) => {
       modal.addEventListener('click', (event) => {
         if (event.target === modal) {
           modal.hidden = true;
           if (modal === deleteModal) {
             pendingDeleteId = null;
+          }
+          if (modal === adminModal) {
+            adminPasswordInput.type = 'password';
+            togglePasswordButton.textContent = 'Show';
           }
         }
       });
@@ -438,7 +453,6 @@
       const hasPassword = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
 
       composeSection.hidden = !isAdminUnlocked;
-      adminSection.hidden = isAdminUnlocked;
       topSignoutButton.hidden = !isAdminUnlocked;
       passwordSetup.hidden = hasPassword;
       signInAdminButton.disabled = !hasPassword;
@@ -492,7 +506,6 @@
   </script>
 </body>
 </html>
-
 
 
 
