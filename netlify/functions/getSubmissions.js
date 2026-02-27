@@ -2,7 +2,7 @@ const fetch = require("node-fetch");
 
 exports.handler = async () => {
   const token = process.env.GITHUB_TOKEN;
-  const repo = "YOUR_USERNAME/YOUR_REPO";
+  const repo = "joshunkan-dev/akpans-almanac";
   const filePath = "submissions.json";
 
   const response = await fetch(
