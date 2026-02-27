@@ -484,3 +484,7 @@ body.admin-mode .post-card {
     min-height: 100%;
   }
 }
+  .panel {
+    min-height: 100%;
+  }
+}
